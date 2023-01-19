@@ -22,7 +22,7 @@ export default function Player() {
     }
 
     useEffect(() => {
-        subscribeKeys(
+        const unsuscribeJump = subscribeKeys(
             (state) => state.jump,
             (value) => {
                 if(value) {
@@ -30,6 +30,10 @@ export default function Player() {
                 }
             }
         )
+
+        return () => {
+            unsuscribeJump()
+        }
     }, [])
 
     useFrame((state, delta) => {
