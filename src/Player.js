@@ -14,9 +14,11 @@ export default function Player() {
         origin.y -= 0.31
         const direction = { x:0, y:-1, z:0 }
         const ray = new rapier.Ray(origin, direction)
-        const hit = rapierWorld.castRay(ray)
+        const hit = rapierWorld.castRay(ray, 10, true)
 
-        body.current.applyImpulse({ x:0, y:0.5, z:0 })
+        if(hit.toi < 0.15) {
+            body.current.applyImpulse({ x:0, y:0.5, z:0 })
+        }
     }
 
     useEffect(() => {
