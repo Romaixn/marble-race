@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import { useRapier, RigidBody } from "@react-three/rapier"
 import { useKeyboardControls } from "@react-three/drei"
+import useGame from "./stores/useGame"
 
 export default function Player() {
     const body = useRef()
@@ -25,8 +26,28 @@ export default function Player() {
         }
     }
 
+    const reset = () => {
+        body.current.setTranslation({ x:0, y:0, z:0 })
+        body.current.setLinvel({ x:0, y:0, z:0 })
+        body.current.setAngvel({ x:0, y:0, z:0 })
+    }
+
+    const start = useGame((state) => state.start)
+    const end = useGame((state) => state.end)
+    const restart = useGame((state) => state.restart)
+    const blocksCount = useGame((state) => state.blocksCount)
+
     useEffect(() => {
-        const unsuscribeJump = subscribeKeys(
+        const unsubscribeReset = useGame.subscribe(
+            (state) => state.phase,
+            (value) => {
+                if(value === 'ready') {
+                    reset()
+                }
+            }
+        )
+
+        const unsubscribeJump = subscribeKeys(
             (state) => state.jump,
             (value) => {
                 if(value) {
@@ -35,8 +56,14 @@ export default function Player() {
             }
         )
 
+        const unsubscribeAny = subscribeKeys(() => {
+            start()
+        })
+
         return () => {
-            unsuscribeJump()
+            unsubscribeJump()
+            unsubscribeAny()
+            unsubscribeReset()
         }
     }, [])
 
@@ -93,6 +120,14 @@ export default function Player() {
 
         state.camera.position.copy(smoothedCameraPosition)
         state.camera.lookAt(smoothedCameraTarget)
+
+        if(bodyPosition.z < -(blocksCount * 4 + 2)) {
+            end()
+        }
+
+        if(bodyPosition.y < - 4) {
+            restart()
+        }
     })
 
     return <RigidBody
